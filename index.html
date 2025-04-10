@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Voice Description Player</title>
+    <!-- <link rel="stylesheet" href="/P3/styles.css"> -->
+    <style>
+        body {
+            font-family: Arial;
+            background: #f0f0f0;
+            height: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            margin-top: 10px;
+        }
+
+        .player-container {
+            width: 400px;
+            padding: 20px;
+            padding-top: 0;
+            background: white;
+            border: 2px solid black;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .title {
+            font-size: 24px;
+            margin: 0;
+            margin-bottom: 5px;
+        }
+
+        .painting {
+            width: 100%;
+            margin-bottom: 15px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .subtitle-box {
+            margin-top: 20px;
+            height: 70px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #f9f9f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="player-container">
+        <br><br>
+        <h2 class="title">ASMI</h2>
+        <h3 class="subheading"> Medium- Oil on Canvas</h3>
+
+        <img src="image/asami.jpg" class="painting" />
+        <div class="subtitle-box" id="subtitle">Click play to hear the description.</div>
+        <div class="controls">
+            <button onclick="rewind()">⏪ 5s</button>
+            <button onclick="togglePlay()" id="playBtn">▶️ Play</button>
+            <button onclick="stopSpeaking()">⏹ Stop</button>
+            <button onclick="forward()">⏩ 5s</button>
+        </div>
+
+
+    </div>
+
+    <!-- <script src="/P3/script.js"></script> -->
+    <script>
+        let synth = window.speechSynthesis;
+        let isPlaying = false;
+        let isPaused = false;
+        let currentIndex = 0;
+
+        const sentences = [
+            "The painting portrays a young girl in side profile, standing calmly with a serene expression.",
+
+            "Her long, flowing hair and textured blue dress are beautifully detailed with soft brushstrokes.",
+
+            "The light green background contrasts gently with her figure, adding a peaceful mood to the artwork.",
+
+            "The composition captures the innocence and quiet strength of childhood with grace.",
+
+            "The realistic style and subtle colors reflect the artist’s delicate and thoughtful approach."
+        ];
+
+        function speakSentence(index) {
+            if (index >= sentences.length) {
+                isPlaying = false;
+                isPaused = false;
+                updatePlayButton();
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(sentences[index]);
+            const subtitleBox = document.getElementById("subtitle");
+
+            // Use male-friendly voice if available
+            const voices = synth.getVoices().filter(v => v.name.toLowerCase().includes("female"));
+            if (voices.length > 0) utterance.voice = voices[0];
+
+            subtitleBox.textContent = sentences[index];
+            currentIndex = index;
+            isPlaying = true;
+            isPaused = false;
+            updatePlayButton();
+
+            utterance.onend = () => {
+                if (!isPaused) {
+                    currentIndex++;
+                    speakSentence(currentIndex);
+                }
+            };
+
+            synth.speak(utterance);
+        }
+
+        function togglePlay() {
+            if (isPlaying && !isPaused) {
+                pauseSpeaking(); // Currently playing, so pause
+            } else if (isPaused) {
+                // Resume same sentence
+                speakSentence(currentIndex);
+            } else {
+                // Start from beginning or resume from current index
+                speakSentence(currentIndex);
+            }
+        }
+
+        function pauseSpeaking() {
+            if (synth.speaking) {
+                synth.cancel();  // no built-in pause, so we simulate pause
+                isPaused = true;
+                isPlaying = false;
+                updatePlayButton();
+            }
+        }
+
+        function stopSpeaking() {
+            synth.cancel();
+            isPaused = false;
+            isPlaying = false;
+            currentIndex = 0;
+            document.getElementById("subtitle").textContent = "Stopped. Click play to start over.";
+            updatePlayButton();
+        }
+
+        function rewind() {
+            if (currentIndex > 0) {
+                synth.cancel();
+                currentIndex--;
+                speakSentence(currentIndex);
+            }
+        }
+
+        function forward() {
+            if (currentIndex < sentences.length - 1) {
+                synth.cancel();
+                currentIndex++;
+                speakSentence(currentIndex);
+            }
+        }
+
+        function updatePlayButton() {
+            const btn = document.getElementById("playBtn");
+            btn.textContent = isPlaying ? "⏸ Pause" : "▶️ Play";
+        }
+
+    </script>
+</body>
+
+</html>
